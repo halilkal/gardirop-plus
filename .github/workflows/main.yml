@@ -11,5 +11,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Repo’yu checkout et
       - name: Checkout repository
-        uses: actions/
+        uses: actions/checkout@v3
+
+      # 2️⃣ Flutter kur
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      # 3️⃣ Flutter paketlerini cachele
+      - name: Cache Flutter packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.flutter
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
+
+      # 4️⃣ Yeni Flutter projesi oluştur ve mevcut kodları taşı
+      - name: Create new Flutter project
+        run: |
+          flutter create -t app temp_app
+          rm -rf temp_app/lib
+          cp -r lib temp_app/lib
+          cp pubspec.yaml temp_app/pubspec.yaml
+          cp -r assets temp_app/assets || true
+          mv temp_app/* .
+          rm -rf temp_app
+
+      # 5️⃣ Temizle
+      - name: Flutter clean
+        run: flutter clean
+
+      # 6️⃣ Bağımlılıkları yükle
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 7️⃣ Debug APK üret
+      - name: Build APK (Debug)
+        run: flutter build apk --debug
+
+      # 8️⃣ APK’yı artifact olarak yükle
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: gardirop-plus-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
