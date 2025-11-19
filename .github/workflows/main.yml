@@ -39,7 +39,7 @@ jobs:
           cp -r lib temp_app/lib
           cp pubspec.yaml temp_app/pubspec.yaml
           cp -r assets temp_app/assets || true
-          mv temp_app/* .
+          rsync -a --ignore-existing temp_app/ ./ 
           rm -rf temp_app
 
       # 5️⃣ Temizle
