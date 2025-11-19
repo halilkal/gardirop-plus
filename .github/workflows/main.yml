@@ -1,80 +1,62 @@
-import 'package:flutter/material.dart';
-import 'dart:math';
+name: Build Android APK
 
-void main() => runApp(MyApp());
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Gardirop Test',
-      home: Scaffold(
-        appBar: AppBar(title: Text('Gardirop Test')),
-        body: TestScreen(),
-      ),
-    );
-  }
-}
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-class TestScreen extends StatefulWidget {
-  @override
-  _TestScreenState createState() => _TestScreenState();
-}
+    steps:
+      # 1️⃣ Repo’yu checkout et
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-class _TestScreenState extends State<TestScreen> {
-  // 20 örnek erkek kıyafet resmi URL’si
-  List<String> images = [
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt1.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt2.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt3.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt4.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt5.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt6.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt7.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt8.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt9.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shirt10.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/pants1.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/pants2.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/pants3.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/pants4.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/pants5.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/jacket1.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/jacket2.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shoes1.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shoes2.png',
-    'https://raw.githubusercontent.com/kullaniciadi/gardrop-test-assets/main/shoes3.png',
-  ];
+      # 2️⃣ Flutter kur
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
 
-  String currentImage = '';
+      # 3️⃣ Flutter paketlerini cachele
+      - name: Cache Flutter packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.flutter
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
 
-  @override
-  void initState() {
-    super.initState();
-    // Uygulama ilk açıldığında rastgele bir resim göster
-    currentImage = images[Random().nextInt(images.length)];
-  }
+      # 4️⃣ Mevcut projeyi geçici Flutter projesine taşı (opsiyonel)
+      - name: Prepare Flutter project
+        run: |
+          flutter create -t app temp_app
+          rm -rf temp_app/lib
+          cp -r lib temp_app/lib
+          cp pubspec.yaml temp_app/pubspec.yaml
+          cp -r assets temp_app/assets || true
+          rsync -a --ignore-existing temp_app/ ./ 
+          rm -rf temp_app
 
-  void showRandomImage() {
-    setState(() {
-      currentImage = images[Random().nextInt(images.length)];
-    });
-  }
+      # 5️⃣ Flutter clean
+      - name: Flutter clean
+        run: flutter clean
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.network(currentImage, height: 250),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: showRandomImage,
-            child: Text('Rastgele Kombin Göster'),
-          ),
-        ],
-      ),
-    );
-  }
-}
+      # 6️⃣ Bağımlılıkları yükle
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 7️⃣ Debug APK üret
+      - name: Build APK (Debug)
+        run: flutter build apk --debug
+
+      # 8️⃣ APK’yı artifact olarak yükle
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: gardirop-plus-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
