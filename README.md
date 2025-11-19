@@ -5,7 +5,7 @@ Bu dosyaları kullanarak kendi bilgisayarınızda veya CI (GitHub Actions) ile A
 
 ## İçerik
 - lib/main.dart : Basit uygulama (fotoğraf ekleme, kategori seçme, basit kombin önerisi)
-- pubspec.yaml : bağımlılıklar 
+- pubspec.yaml : bağımlılıklar  
 
 ## Yerel olarak APK oluşturma (kısa)
 1. Bilgisayarınıza Flutter kurun: https://flutter.dev
