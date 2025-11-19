@@ -1,0 +1,20 @@
+name: gardirop_plus_demo
+description: Demo Flutter app for Gardırop+ (simple MVP). Replace with full project for production.
+publish_to: 'none'
+version: 0.0.1
+environment:
+  sdk: ">=2.18.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^0.8.7+3
+  path_provider: ^2.0.11
+  shared_preferences: ^2.0.15
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
